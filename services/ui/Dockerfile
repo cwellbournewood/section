@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # ----- deps -----
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml* ./
@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     (test -f pnpm-lock.yaml && pnpm install --frozen-lockfile) || pnpm install --no-frozen-lockfile
 
 # ----- build -----
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
@@ -17,7 +17,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
 # ----- run -----
-FROM node:20-alpine AS run
+FROM node:25-alpine AS run
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

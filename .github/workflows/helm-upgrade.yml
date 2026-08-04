@@ -301,7 +301,26 @@ jobs:
       - name: Run demo.sh against upgraded release
         env:
           NO_COLOR: "1"
-        run: bash scripts/demo.sh http://localhost:8080
+        run: |
+          set -euo pipefail
+          # Every workflow step runs in its own shell, and the smoke-test step
+          # above tears its port-forward down through an EXIT trap, so nothing
+          # is listening on 8080 by the time this step starts. Establish a
+          # fresh port-forward here instead of relying on a background process
+          # surviving across steps.
+          pkill -f 'kubectl.*port-forward.*section-gateway' 2>/dev/null || true
+          sleep 2
+          kubectl -n section port-forward svc/section-gateway 8080:8080 >/tmp/pf-demo.log 2>&1 &
+          PF_PID=$!
+          trap "kill $PF_PID 2>/dev/null || true" EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/healthz >/dev/null 2>&1; then
+              echo "gateway healthy via port-forward after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          bash scripts/demo.sh http://localhost:8080
 
       - name: helm history
         if: always()
@@ -320,6 +339,7 @@ jobs:
           kubectl -n section logs --tail=500 -l app.kubernetes.io/component=ui > artifacts/ui.log || true
           cat /tmp/pf-baseline.log >> artifacts/pf.log 2>/dev/null || true
           cat /tmp/pf-head.log     >> artifacts/pf.log 2>/dev/null || true
+          cat /tmp/pf-demo.log     >> artifacts/pf.log 2>/dev/null || true
 
       - name: Upload upgrade artefacts
         if: always()

@@ -75,7 +75,9 @@ class ChunkerTest {
         val text = "alpha beta gamma delta epsilon"
         val chunks = Chunker.split(text, maxBytes = 14)
         // Some whitespace break must be honoured.
-        assertThat(chunks[0].text.last()).isWhitespace()
+        // AssertJ's character assert has no isWhitespace(), so assert on the
+        // Kotlin stdlib predicate instead.
+        assertThat(chunks[0].text.last().isWhitespace()).isTrue()
     }
 
     @Test

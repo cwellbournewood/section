@@ -44,7 +44,9 @@ jobs:
         run: uv python install 3.12
 
       - name: Sync dependencies
-        run: uv sync --frozen || uv pip install -e '.[dev]'
+        # --extra dev pulls in ruff + pytest + asyncio plugin needed by the
+        # steps below; a bare `uv sync` installs runtime deps only.
+        run: uv sync --frozen --extra dev
 
       - name: Ruff
         run: uv run ruff check .
@@ -194,7 +196,9 @@ jobs:
         run: uv python install 3.12
 
       - name: Sync
-        run: uv sync --frozen
+        # --extra dev pulls in pytest + asyncio plugin; without it `uv run
+        # pytest` fails with "Failed to spawn: pytest".
+        run: uv sync --frozen --extra dev
 
       - name: Pytest scan endpoints
         run: uv run pytest -q tests/test_v1_scan.py --maxfail=1

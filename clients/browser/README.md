@@ -100,7 +100,7 @@ bottom:
 ```bash
 npm install
 npm run dev          # vite watch build into dist/
-npm run type-check
+npm run typecheck
 npm run lint
 npm test             # vitest unit tests
 npm run e2e          # Playwright against e2e/fixtures/*.html

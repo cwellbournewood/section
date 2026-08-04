@@ -174,8 +174,20 @@ jobs:
           printf '%s' "$FPE_KEY"    > /tmp/section-secrets/fpe
           printf '%s' "$FPE_TWEAK"  > /tmp/section-secrets/tweak
 
+          # migrations.enabled=false on the BASELINE install only. Charts at
+          # v1.0.0 and earlier annotate the migrations Job with
+          # `pre-install`, but Helm runs pre-install hooks before the
+          # release's ServiceAccount, gateway Secret and embedded Postgres
+          # exist, so the hook pod can never start and the install hangs
+          # until it reports "failed pre-install: timed out waiting for the
+          # condition". The gateway entrypoint applies `alembic upgrade head`
+          # itself (SECTION_AUTO_MIGRATE defaults to 1), so the baseline
+          # release reaches an identical schema either way. The upgrade step
+          # below leaves migrations enabled, which is what exercises the
+          # pre-upgrade hook path on the HEAD chart.
           helm install section /tmp/section-baseline/deploy/helm/section \
             --namespace section --create-namespace \
+            --set migrations.enabled=false \
             --set image.gateway.tag=baseline \
             --set image.ui.tag=baseline \
             --set image.gateway.pullPolicy=IfNotPresent \

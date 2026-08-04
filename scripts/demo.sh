@@ -91,7 +91,7 @@ send_chat() {
     --max-time 30 \
     -d "$(printf '{"model":"gpt-4o-mini","messages":[{"role":"user","content":%s}]}' "$(printf '%s' "$prompt" | awk 'BEGIN{ORS=""} {gsub(/\\/,"\\\\"); gsub(/"/,"\\\""); print "\""$0"\""}')")" \
     "${GATEWAY_URL}/v1/chat/completions" || true)
-  REASON=$(awk 'BEGIN{IGNORECASE=1} /^[Xx]-[Pp]raesidio-[Rr]eason:/ {sub(/^[^:]+:[ \t]*/,""); sub(/\r$/,""); print; exit}' "$tmp_head")
+  REASON=$(awk 'BEGIN{IGNORECASE=1} /^[Xx]-[Ss]ection-[Rr]eason:/ {sub(/^[^:]+:[ \t]*/,""); sub(/\r$/,""); print; exit}' "$tmp_head")
   BODY=$(cat "$tmp_body")
   rm -f "$tmp_body" "$tmp_head"
 }

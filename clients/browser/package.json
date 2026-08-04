@@ -11,7 +11,7 @@
     "build:zip": "npm run build && node scripts/build-zip.mjs",
     "build:crx": "npm run build && node scripts/build-crx.mjs",
     "build:release": "npm run build && node scripts/build-zip.mjs && node scripts/build-crx.mjs && node scripts/build-release.mjs",
-    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint --max-warnings=0 \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
     "test": "vitest run",
     "test:watch": "vitest",

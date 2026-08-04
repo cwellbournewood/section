@@ -2,6 +2,16 @@
 # Pre-upgrade migrations Job. Runs the SQL files mounted from a ConfigMap
 # against the configured Postgres database. Hook weight ensures it runs
 # before any Deployments/StatefulSets are upgraded.
+#
+# NOTE: this is deliberately `pre-upgrade` only, NOT `pre-install`. Helm runs
+# pre-install hooks before any of the release's regular resources exist, so on
+# a fresh install the Job pod would reference a ServiceAccount and a Secret
+# (database-url) that have not been created yet — the pod never starts and
+# `helm install --wait` sits until it reports "failed pre-install: timed out
+# waiting for the condition". With embedded Postgres there is also no database
+# to migrate against at that point. Fresh installs are covered by the gateway
+# entrypoint, which runs `alembic upgrade head` (retrying while Postgres comes
+# up) unless SECTION_AUTO_MIGRATE=0.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,7 +20,7 @@ metadata:
   labels:
     {{- include "section.componentLabels" (dict "ctx" . "component" "migrations") | nindent 4 }}
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook": pre-upgrade
     "helm.sh/hook-weight": "-10"
     "helm.sh/hook-delete-policy": before-hook-creation
 data:
@@ -28,7 +38,7 @@ metadata:
   labels:
     {{- include "section.componentLabels" (dict "ctx" . "component" "migrations") | nindent 4 }}
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook": pre-upgrade
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:

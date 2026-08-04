@@ -7,6 +7,7 @@
 // `org.jetbrains.intellij` plugin (1.17.x) covers the full range.
 
 import org.jetbrains.changelog.Changelog
+import org.jetbrains.changelog.date
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {

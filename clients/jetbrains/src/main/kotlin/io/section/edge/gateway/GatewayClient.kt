@@ -41,10 +41,16 @@ class GatewayClient(
      * gateway fields the plugin doesn't know about (forwards compat)
      * and to skip nulls on the way out (avoids sending `model: null`
      * which Pydantic would accept but the audit row would clutter).
+     *
+     * `encodeDefaults` must stay true: `ScanRequest.client` defaults to
+     * "jetbrains", and with defaults omitted the field never reached the
+     * gateway, which then recorded the request under its own fallback
+     * client instead of attributing it to the plugin. Nulls are still
+     * dropped via `explicitNulls`, so optional fields stay absent.
      */
     val json: Json = Json {
         ignoreUnknownKeys = true
-        encodeDefaults = false
+        encodeDefaults = true
         explicitNulls = false
         isLenient = true
     },

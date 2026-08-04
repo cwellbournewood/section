@@ -12,9 +12,11 @@ import org.junit.jupiter.api.Test
  */
 class ScanModelsTest {
 
+    // Mirrors GatewayClient.json — encodeDefaults must be true so that
+    // ScanRequest.client is serialized at its default value.
     private val json = Json {
         ignoreUnknownKeys = true
-        encodeDefaults = false
+        encodeDefaults = true
         explicitNulls = false
         prettyPrint = false
     }

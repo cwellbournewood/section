@@ -65,10 +65,15 @@ object Chunker {
         var i = start
         while (i < n) {
             val c = text[i]
-            val cb = utf8Len(c, text, i)
+            // A surrogate pair is one code point: consume both chars
+            // together so a chunk can never end on a lone high surrogate,
+            // and charge its 4 UTF-8 bytes once rather than once per char.
+            val pair = Character.isHighSurrogate(c) &&
+                i + 1 < n && Character.isLowSurrogate(text[i + 1])
+            val cb = if (pair) 4 else utf8Len(c)
             if (bytes + cb > maxBytes) break
             bytes += cb
-            i++
+            i += if (pair) 2 else 1
             // Track boundary candidates in priority order; pick the
             // latest seen of the highest-priority type at break time.
             if (c == '\n' && i < n && text[i] == '\n') {
@@ -93,19 +98,33 @@ object Chunker {
             else -> i
         }
         // Defensive: if a degenerate string makes us pick the same
-        // offset twice (e.g. a single character > maxBytes when
-        // encoded), force at least one char of progress.
-        return if (candidate <= start) start + 1 else candidate
+        // offset twice (e.g. a single code point whose UTF-8 encoding
+        // exceeds maxBytes), force progress — by a whole surrogate pair
+        // where one is present, so we never emit half a code point.
+        if (candidate <= start) {
+            val step = if (Character.isHighSurrogate(text[start]) &&
+                start + 1 < n && Character.isLowSurrogate(text[start + 1])
+            ) {
+                2
+            } else {
+                1
+            }
+            return start + step
+        }
+        return candidate
     }
 
-    /** UTF-8 byte length of a single (possibly surrogate-pair) char. */
-    private fun utf8Len(c: Char, text: String, i: Int): Int {
+    /**
+     * UTF-8 byte length of a single char. Surrogate pairs are handled by
+     * the caller, which charges 4 bytes for the pair as a unit; an
+     * unpaired surrogate falls through to 3 here, matching how it would
+     * be encoded as a replacement character.
+     */
+    private fun utf8Len(c: Char): Int {
         val code = c.code
         return when {
             code < 0x80 -> 1
             code < 0x800 -> 2
-            Character.isHighSurrogate(c) && i + 1 < text.length &&
-                Character.isLowSurrogate(text[i + 1]) -> 4
             else -> 3
         }
     }

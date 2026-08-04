@@ -45,16 +45,15 @@ jobs:
         #   test_e2e_real_llm: own e2e.yml job (continue-on-error pending 1.0.1 fix)
         #   test_alembic:      runs in rls.yml against real Postgres
         #   test_rls_postgres: same
-        # --deselect the two v1_scan tests that race the async audit
-        # writer when SQLite is in-memory-per-connection (no cache=shared).
-        # Pass locally; tracked for 1.0.1 conftest restructure.
+        # The two v1_scan audit tests used to be --deselect'ed here because
+        # they raced the async audit writer against an in-memory-per-connection
+        # SQLite DB. test_v1_scan.py now gives each test a file-backed SQLite
+        # database, so they run everywhere.
         run: |
           uv run pytest -q --maxfail=1 \
             --ignore=tests/test_e2e_real_llm.py \
             --ignore=tests/test_alembic.py \
-            --ignore=tests/test_rls_postgres.py \
-            --deselect tests/test_v1_scan.py::test_scan_writes_audit_with_edge_source_tag \
-            --deselect tests/test_v1_scan.py::test_scan_normalises_unknown_client_value
+            --ignore=tests/test_rls_postgres.py
 
       # Verify the Python label-display map and the TS twin in
       # services/ui/lib/labels.ts have not drifted. Source of truth is

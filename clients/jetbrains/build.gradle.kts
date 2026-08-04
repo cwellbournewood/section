@@ -22,9 +22,10 @@ plugins {
 group = providers.gradleProperty("pluginGroup").get()
 version = providers.gradleProperty("pluginVersion").get()
 
-repositories {
-    mavenCentral()
-}
+// NOTE: no `repositories { }` block here. settings.gradle.kts sets
+// RepositoriesMode.FAIL_ON_PROJECT_REPOS and declares mavenCentral plus the
+// JetBrains IntelliJ repositories centrally; re-declaring them at project
+// level fails the build with "repository 'MavenRepo' was added by build file".
 
 dependencies {
     // OkHttp is bundled with the IntelliJ Platform (used internally for

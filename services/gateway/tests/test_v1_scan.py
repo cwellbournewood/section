@@ -70,6 +70,15 @@ def _write_bundle(tmp: Path, *, block_aws: bool = False) -> Path:
 def _set_bundle(tmp: Path, **kwargs) -> None:
     bundle = _write_bundle(tmp, **kwargs)
     os.environ["SECTION_POLICY_BUNDLE"] = str(bundle)
+    # Point each test at its own file-backed SQLite database rather than
+    # ":memory:". With sqlite+aiosqlite a ":memory:" database is scoped to the
+    # connection that opened it, so rows written by the batched AuditWriter are
+    # not reliably visible to the /admin/events read path — on CI the two
+    # audit-reading tests below failed with events=[] even after draining the
+    # writer with flush() and polling for six seconds. A file in the per-test
+    # temp dir keeps the same isolation but makes writes durable and visible
+    # regardless of which connection performs the read.
+    os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{(tmp / 'section-test.db').as_posix()}"
     from section_gateway.config import get_settings
     get_settings.cache_clear()
 

@@ -115,9 +115,15 @@ for c in cases:
     actual_decision = (ev or {}).get("decision")
     actual_findings = set()
     for fnd in (ev or {}).get("findings", []) or []:
-        cat = fnd.get("category") or fnd.get("type")
-        if cat:
-            actual_findings.add(cat)
+        # Findings serialise a canonical `<category>.<thing>` id in `label`
+        # (e.g. "credential.aws_access_key"). They have never carried a
+        # `category` or `type` key, so reading those returned None for every
+        # finding and every case reported "got []" — including cases whose
+        # decision was already correct. Keep the old keys as a fallback for
+        # audit rows written before the label taxonomy landed.
+        label = fnd.get("label") or fnd.get("category") or fnd.get("type")
+        if label:
+            actual_findings.add(label)
 
     if actual_decision != expected_decision:
         failures.append(
